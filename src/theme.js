@@ -2,8 +2,7 @@ import { extendTheme } from "@chakra-ui/react";
 
 const theme = extendTheme({
   config: {
-    initialColorMode: "dark", // Set the initial color mode to dark
-    useSystemColorMode: false, // If you want to disable color mode switching based on system settings
+    // useSystemColorMode: false, // If you want to disable color mode switching based on system settings
   },
   fonts: {
     heading: '"Inconsolata", monospace', // Use for headings

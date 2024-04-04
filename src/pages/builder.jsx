@@ -1,11 +1,11 @@
-// pages/builder.jsx
 import React, { useState } from "react";
 import Head from "next/head";
-import { Box, Center, Heading, VStack } from "@chakra-ui/react";
+import { Box, Center, Heading, Input, VStack } from "@chakra-ui/react";
 import PlacesAutocomplete, {
   geocodeByAddress,
   getLatLng,
 } from "react-places-autocomplete";
+import cloud from "/public/cloud.png";
 
 export default function Builder() {
   const [address, setAddress] = useState("");
@@ -19,53 +19,63 @@ export default function Builder() {
 
   return (
     <>
-      {" "}
-      <Head>
-        <script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-          async
-          defer
-        ></script>
-      </Head>
-      <Center height="100vh">
-        <VStack spacing={4}>
-          <Heading>Claim Your Land</Heading>
-          <PlacesAutocomplete
-            value={address}
-            onChange={setAddress}
-            onSelect={handleSelect}
-          >
-            {({
-              getInputProps,
-              suggestions,
-              getSuggestionItemProps,
-              loading,
-            }) => (
-              <Box width="100%" maxW="md">
-                <input
-                  {...getInputProps({
-                    placeholder: "Type address...",
-                  })}
-                  size="lg"
-                />
-                <div>
-                  {loading && <div>Loading...</div>}
-                  {suggestions.map((suggestion) => {
-                    const style = suggestion.active
-                      ? { backgroundColor: "#a8dadc", cursor: "pointer" }
-                      : { backgroundColor: "#ffffff", cursor: "pointer" };
-                    return (
-                      <div {...getSuggestionItemProps(suggestion, { style })}>
-                        {suggestion.description}
-                      </div>
-                    );
-                  })}
-                </div>
-              </Box>
-            )}
-          </PlacesAutocomplete>
-        </VStack>
-      </Center>
+      <Box
+        width="full"
+        height="100vh"
+        bgGradient="linear(to-r, white, blue.500)"
+        backgroundPosition="center"
+        backgroundRepeat="no-repeat"
+        backgroundSize="cover"
+        backgroundImage={cloud}
+        position="relative"
+      >
+        <Center pt="20">
+          <VStack spacing={4} align="center">
+            <Heading textAlign="center">Claim Your Land</Heading>
+            <PlacesAutocomplete
+              value={address}
+              onChange={setAddress}
+              onSelect={handleSelect}
+            >
+              {({
+                getInputProps,
+                suggestions,
+                getSuggestionItemProps,
+                loading,
+              }) => (
+                <Box width="100%" maxW="md">
+                  <Input
+                    {...getInputProps({ placeholder: "Type address..." })}
+                    size="lg"
+                    fontSize={"16px"}
+                  />
+                  <VStack align="start" spacing={2}>
+                    {loading && <Box>Loading...</Box>}
+                    {suggestions.map((suggestion) => {
+                      const style = {
+                        background: suggestion.active ? "#a8dadc" : "#ffffff",
+                        cursor: "pointer",
+                        color: "black",
+                        width: "100%",
+                        padding: "10px",
+                        fontSize: "16px",
+                      };
+                      return (
+                        <Box
+                          {...getSuggestionItemProps(suggestion, { style })}
+                          key={suggestion.placeId}
+                        >
+                          {suggestion.description}
+                        </Box>
+                      );
+                    })}
+                  </VStack>
+                </Box>
+              )}
+            </PlacesAutocomplete>
+          </VStack>
+        </Center>
+      </Box>
     </>
   );
 }
