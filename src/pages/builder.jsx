@@ -5,7 +5,7 @@ import PlacesAutocomplete, {
   geocodeByAddress,
   getLatLng,
 } from "react-places-autocomplete";
-import cloud from "/public/cloud.png";
+
 
 export default function Builder() {
   const [address, setAddress] = useState("");
@@ -22,11 +22,11 @@ export default function Builder() {
       <Box
         width="full"
         height="100vh"
-        bgGradient="linear(to-r, white, blue.500)"
-        backgroundPosition="center"
-        backgroundRepeat="no-repeat"
-        backgroundSize="cover"
-        backgroundImage={cloud}
+        bgGradient="linear(to-t, white, blue.500)"
+        // backgroundPosition="center"
+        // backgroundRepeat="no-repeat"
+        // backgroundSize="cover"
+        // backgroundImage="url('/cloud.png')"
         position="relative"
       >
         <Center pt="20">
