@@ -15,10 +15,17 @@ import PlacesAutocomplete, {
   geocodeByAddress,
   getLatLng,
 } from "react-places-autocomplete";
+import { useRouter } from "next/router";
+
 import contractABI from "../contract/LandDeedABI.json";
-const contractAddress = "0xf6b5739bc5014684768aa9e78ec8d94ae447040c";
+const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
 export default function Builder() {
+  const router = useRouter();
+
+  const navigateToViewer = () => {
+    router.push("/viewer"); // Make sure the path is correct
+  };
   // location stuff
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState("");
@@ -136,10 +143,12 @@ export default function Builder() {
         signer
       );
       // Convert strings to BigInt
-      const latBigInt = BigInt(latInt);
-      const lngBigInt = BigInt(lngInt);
+      const latBigInt = BigInt(latInt).toString();
+      const lngBigInt = BigInt(lngInt).toString();
 
       const address = await signer.address;
+      console.log("Minting with params:", address, latBigInt, lngBigInt);
+
       const tx = await landDeedContract.mintLandDeed(
         address,
         latBigInt,
@@ -235,6 +244,9 @@ export default function Builder() {
               }}
             >
               Claim
+            </Button>
+            <Button colorScheme="teal" onClick={navigateToViewer}>
+              View Deeds
             </Button>
           </VStack>
         </Center>
