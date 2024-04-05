@@ -9,20 +9,27 @@ import {
   Text,
   VStack,
   Button,
+  useToast,
 } from "@chakra-ui/react";
 import PlacesAutocomplete, {
   geocodeByAddress,
   getLatLng,
 } from "react-places-autocomplete";
+import contractABI from "../contract/LandDeedABI.json";
+const contractAddress = "0xf6b5739bc5014684768aa9e78ec8d94ae447040c";
 
 export default function Builder() {
   // location stuff
   const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   // blockchain stuff
   const [locationSelected, setLocationSelected] = useState(false); // New state to track if a location is selected
   const [userAddress, setUserAddress] = useState("");
 
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
+
+  const toast = useToast();
 
   // Polygon Amoy Testnet Chain ID
   const targetNetworkId = "80002";
@@ -61,7 +68,11 @@ export default function Builder() {
     const results = await geocodeByAddress(value);
     const latLng = await getLatLng(results[0]);
     console.log(latLng); // Here you can handle the lat/lng as needed
+    console.log("lat, lng: ", latLng.lat, latLng.lng);
+    setLatitude(latLng.lat);
+    setLongitude(latLng.lng);
     setAddress(value);
+    console.log("lat, lng: ", latitude, longitude);
     setLocationSelected(true); // Set to true when a location is selected
   };
   const switchNetwork = async () => {
@@ -90,6 +101,69 @@ export default function Builder() {
         console.error(switchError);
         alert("Failed to switch network. Please try manually in MetaMask.");
       }
+    }
+  };
+
+  const mintLandDeed = async () => {
+    console.log("when needed lat, lng: ", latitude, longitude);
+    if (
+      !isCorrectNetwork ||
+      !locationSelected ||
+      isNaN(latitude) ||
+      isNaN(longitude)
+    ) {
+      toast({
+        title: "An error occurred",
+        description: "Sorry.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Convert the coordinates to a string representation of an integer
+    const latInt = Math.round(latitude * 1e6).toString();
+    const lngInt = Math.round(longitude * 1e6).toString();
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const landDeedContract = new ethers.Contract(
+        contractAddress,
+        contractABI.abi,
+        signer
+      );
+      // Convert strings to BigInt
+      const latBigInt = BigInt(latInt);
+      const lngBigInt = BigInt(lngInt);
+
+      const address = await signer.address;
+      const tx = await landDeedContract.mintLandDeed(
+        address,
+        latBigInt,
+        lngBigInt
+      );
+
+      await tx.wait();
+
+      toast({
+        title: "Transaction completed",
+        description: "Land Deed NFT minted successfully.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error("Minting failed:", error);
+      toast({
+        title: "Minting failed",
+        description: "There was an error minting the Land Deed NFT.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -155,7 +229,7 @@ export default function Builder() {
                 if (!isCorrectNetwork) {
                   switchNetwork();
                 } else {
-                  // Proceed with claiming land
+                  mintLandDeed();
                   console.log("Proceed with transaction...");
                 }
               }}
