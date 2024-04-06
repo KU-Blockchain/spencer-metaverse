@@ -41,22 +41,23 @@ export default function Viewer() {
       );
 
       try {
-        const balance = await contract.balanceOf(address);
+        let balance = await contract.balanceOf(address);
+        // Safely handle the balance as a BigNumber
+        balance =
+          typeof balance.toNumber === "function" ? balance.toNumber() : balance;
+
         const deeds = [];
         for (let i = 0; i < balance; i++) {
           const tokenId = await contract.tokenOfOwnerByIndex(address, i);
-          const tokenURI = await contract.tokenURI(tokenId);
-          // Assuming tokenURI is a simple string combining lat and long, we split it to extract the values
-          const [latitude, longitude] = tokenURI
-            .replace("lat:", "")
-            .replace("long:", "")
-            .split(",");
+          // Assuming getDeedInfo returns latitude and longitude as strings in an array
+          const [latitude, longitude] = await contract.getDeedInfo(tokenId);
           deeds.push({
-            tokenId,
+            tokenId: tokenId.toString(), // Convert BigNumber to string
             latitude,
             longitude,
           });
         }
+
         setDeeds(deeds);
       } catch (error) {
         console.error("Failed to load NFTs:", error);
@@ -94,18 +95,24 @@ export default function Viewer() {
             ) : hasLoaded && deeds.length === 0 ? (
               <Text>No Land Deed NFTs found.</Text>
             ) : (
-              <SimpleGrid columns={3} spacing={10}>
+              <SimpleGrid columns={3} p={8} spacing={8}>
                 {deeds.map((deed, index) => (
                   <Box key={index} boxShadow="lg" p="6" rounded="md" bg="white">
                     {/* Placeholder Image or other identifier */}
                     <Text
-                      fontSize="lg"
+                      fontSize="md"
                       fontWeight="bold"
                       mt="2"
+                      textColor={"black"}
                     >{`Deed ID: ${deed.tokenId}`}</Text>
-                    <Text fontSize="md">{`Latitude: ${deed.latitude}`}</Text>
-                    <Text fontSize="md">{`Longitude: ${deed.longitude}`}</Text>
-                    {/* Additional metadata or actions could be displayed here */}
+                    <Text
+                      fontSize="sm"
+                      textColor={"black"}
+                    >{`Latitude: ${deed.latitude}`}</Text>
+                    <Text
+                      fontSize="sm"
+                      textColor={"black"}
+                    >{`Longitude: ${deed.longitude}`}</Text>
                   </Box>
                 ))}
               </SimpleGrid>
