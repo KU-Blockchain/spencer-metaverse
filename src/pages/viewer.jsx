@@ -13,7 +13,6 @@ import {
 import { ethers } from "ethers";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import contractABI from "../contract/LandDeedABI.json";
-import { Spinner } from "@chakra-ui/react";
 
 const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
@@ -23,40 +22,41 @@ export default function Viewer() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const router = useRouter();
 
-  // Function to navigate back to the Builder page
   const navigateToBuilder = () => {
     router.push("/builder"); // Make sure the path is correct
   };
 
-  // Function to load the user's Land Deed NFTs
   const loadNFTs = async () => {
     setIsLoading(true);
     setHasLoaded(false);
     if (typeof window.ethereum !== "undefined") {
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        console.log("Contract Address:", contractAddress);
-        const contract = new ethers.Contract(
-          contractAddress,
-          contractABI.abi,
-          provider
-        );
-        const signer = await provider.getSigner();
-        const address = signer.address;
-        console.log("Address:", address);
-        const balance = await contract.balanceOf(address);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []); // Ensure connection and permission
+      const signer = await provider.getSigner();
+      const address = signer.address;
+      const contract = new ethers.Contract(
+        contractAddress,
+        contractABI.abi,
+        provider
+      );
 
-        const deedPromises = [];
+      try {
+        const balance = await contract.balanceOf(address);
+        const deeds = [];
         for (let i = 0; i < balance; i++) {
           const tokenId = await contract.tokenOfOwnerByIndex(address, i);
           const tokenURI = await contract.tokenURI(tokenId);
-          // Fetch metadata from tokenURI if needed, here we assume tokenURI is direct URL to the metadata
-          deedPromises.push(
-            fetch(tokenURI).then((response) => response.json())
-          );
+          // Assuming tokenURI is a simple string combining lat and long, we split it to extract the values
+          const [latitude, longitude] = tokenURI
+            .replace("lat:", "")
+            .replace("long:", "")
+            .split(",");
+          deeds.push({
+            tokenId,
+            latitude,
+            longitude,
+          });
         }
-
-        const deeds = await Promise.all(deedPromises);
         setDeeds(deeds);
       } catch (error) {
         console.error("Failed to load NFTs:", error);
@@ -82,36 +82,30 @@ export default function Viewer() {
           <IconButton
             aria-label="Back to Builder"
             icon={<ArrowBackIcon />}
-            onClick={() => router.push("/builder")}
+            onClick={navigateToBuilder}
           />
-          {/* Fetch Deeds Button */}
           <Button onClick={loadNFTs}>Fetch Deeds</Button>
-          {/* Could add a placeholder for future additional top right buttons or information */}
-          <Box width="48px" height="48px"></Box>
+          <Box width="48px" height="48px" /> {/* Placeholder */}
         </Flex>
-        {/* Container for the NFTs */}
         <Center flex="1" width="full">
           <Box width="full" maxW="container.xl">
             {isLoading ? (
-              <Text>Searching...</Text> // This could also be a Spinner instead of text
+              <Text>Loading...</Text>
             ) : hasLoaded && deeds.length === 0 ? (
-              <Text>There are no NFTs.</Text>
+              <Text>No Land Deed NFTs found.</Text>
             ) : (
               <SimpleGrid columns={3} spacing={10}>
                 {deeds.map((deed, index) => (
                   <Box key={index} boxShadow="lg" p="6" rounded="md" bg="white">
-                    <Image
-                      src={deed.image}
-                      alt={`Land Deed ${index}`}
-                      boxSize="200px"
-                      objectFit="cover"
-                    />
-                    <Text fontSize="lg" fontWeight="bold" mt="2">
-                      {deed.name}
-                    </Text>
-                    <Text fontSize="md">{`Latitude: ${deed.properties.lat}`}</Text>
-                    <Text fontSize="md">{`Longitude: ${deed.properties.lng}`}</Text>
-                    {/* Other metadata details can be displayed here */}
+                    {/* Placeholder Image or other identifier */}
+                    <Text
+                      fontSize="lg"
+                      fontWeight="bold"
+                      mt="2"
+                    >{`Deed ID: ${deed.tokenId}`}</Text>
+                    <Text fontSize="md">{`Latitude: ${deed.latitude}`}</Text>
+                    <Text fontSize="md">{`Longitude: ${deed.longitude}`}</Text>
+                    {/* Additional metadata or actions could be displayed here */}
                   </Box>
                 ))}
               </SimpleGrid>
