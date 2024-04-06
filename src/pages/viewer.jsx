@@ -71,6 +71,33 @@ export default function Viewer() {
     loadNFTs();
   }, []);
 
+  const burnNFT = async (tokenId) => {
+    setIsLoading(true);
+    setHasLoaded(false);
+    if (typeof window.ethereum !== "undefined") {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []); // Ensure connection and permission
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(
+        contractAddress,
+        contractABI.abi,
+        signer
+      );
+
+      try {
+        const tx = await contract.burnNFT(tokenId);
+        await tx.wait(); // Wait for the transaction to be mined
+        loadNFTs(); // Reload the NFTs to reflect the change
+        alert(`Land Deed ${tokenId} has been successfully burned.`);
+      } catch (error) {
+        console.error("Failed to burn NFT:", error);
+        alert("Failed to burn the NFT. See console for details.");
+      }
+    }
+    setIsLoading(false);
+    setHasLoaded(true);
+  };
+
   return (
     <Box
       width="full"
@@ -113,6 +140,13 @@ export default function Viewer() {
                       fontSize="sm"
                       textColor={"black"}
                     >{`Longitude: ${deed.longitude}`}</Text>
+                    <Button
+                      mt={4}
+                      colorScheme="red"
+                      onClick={() => burnNFT(deed.tokenId)}
+                    >
+                      Burn
+                    </Button>
                   </Box>
                 ))}
               </SimpleGrid>
